@@ -7,6 +7,8 @@ image: ""
 tags: [演示, 示例, Markdown, Firefly]
 category: "文章示例"
 draft: false
+password: "582642"
+passwordHint: "常用密码"
 ---
 
 ## GitHub 仓库卡片

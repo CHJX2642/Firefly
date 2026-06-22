@@ -7,6 +7,8 @@ image: "./cover.avif"
 tags: ["Firefly", "博客", "Markdown", "使用指南"]
 category: 博客指南
 draft: false
+password: "582642"
+passwordHint: "常用密码"
 ---
 
 

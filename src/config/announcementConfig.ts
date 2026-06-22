@@ -2,10 +2,10 @@ import type { AnnouncementConfig } from "../types/announcementConfig";
 
 export const announcementConfig: AnnouncementConfig = {
 	// 公告标题
-	title: "公告",
+	title: "欢迎来到千羽",
 
 	// 公告内容
-	content: "欢迎来到我的博客！这是一则示例公告。",
+	content: "这里是一个专注于 AI 人工智能、电气工程与电子技术分享的技术博客。感谢你的访问，希望这里的内容对你有所帮助！",
 
 	// 是否允许用户关闭公告
 	closable: true,

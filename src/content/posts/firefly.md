@@ -7,6 +7,8 @@ tags: [Markdown, Firefly, 博客, 主题, 模板]
 category: 文章示例
 draft: false
 image: ./images/firefly2.avif
+password: "582642"
+passwordHint: "常用密码"
 ---
 
 ## 🌟 项目概述
