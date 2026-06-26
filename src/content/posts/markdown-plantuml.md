@@ -7,6 +7,7 @@ category: 文章示例
 draft: false
 password: "582642"
 passwordHint: "常用密码"
+private: true
 ---
 
 ## Markdown 中 PlantUML 图表指南

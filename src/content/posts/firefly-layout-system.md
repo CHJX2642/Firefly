@@ -8,6 +8,7 @@ category: 博客指南
 draft: false
 password: "582642"
 passwordHint: "常用密码"
+private: true
 ---
 
 ## 📖 概述

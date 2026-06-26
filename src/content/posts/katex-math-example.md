@@ -8,6 +8,7 @@ draft: false
 image: api
 password: "582642"
 passwordHint: "常用密码"
+private: true
 ---
 
 本文展示了 [Firefly](https://github.com/CuteLeaf/Firefly) 主题对 KaTeX 数学公式的渲染支持。

@@ -6,6 +6,7 @@ category: 文章示例
 draft: true
 password: "582642"
 passwordHint: "常用密码"
+private: true
 ---
 
 # 这篇文章是草稿

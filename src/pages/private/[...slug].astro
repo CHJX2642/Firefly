@@ -1,0 +1,233 @@
+---
+import { render } from "astro:content";
+import { getCollection } from "astro:content";
+import * as path from "node:path";
+import Comment from "@components/comment/index.astro";
+import Markdown from "@components/common/Markdown.astro";
+import EncryptedPost from "@components/features/EncryptedPost.astro";
+import KatexManager from "@components/features/KatexManager.astro";
+import License from "@components/misc/License.astro";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import {
+	getFileDirFromPath,
+	getPostUrlBySlug,
+	removeFileExtension,
+} from "@utils/url-utils";
+import { Icon } from "astro-icon/components";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import CoverImage from "@/components/common/CoverImage.astro";
+import PostMetadata from "@/components/layout/PostMeta.astro";
+import { coverImageConfig } from "@/config/coverImageConfig";
+import { licenseConfig } from "@/config/licenseConfig";
+import { profileConfig } from "@/config/profileConfig";
+import { siteConfig } from "@/config/siteConfig";
+import { sponsorConfig } from "@/config/sponsorConfig";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getApiUrlList, processCoverImageSync } from "@/utils/image-utils";
+import { url } from "@/utils/url-utils";
+
+export async function getStaticPaths() {
+	// 获取所有私密文章
+	const privatePosts = await getCollection("posts", ({ data }) => {
+		return data.private === true;
+	});
+
+	return privatePosts.map((entry) => {
+		const slug = removeFileExtension(entry.id);
+		return {
+			params: { slug },
+			props: { entry },
+		};
+	});
+}
+
+// 检查是否已验证密码
+const isVerified = false; // 这里会在客户端通过 JavaScript 检查
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const { remarkPluginFrontmatter } = await render(entry);
+
+const bannerPostMeta = {
+	title: entry.data.title,
+	published: entry.data.published,
+	updated: entry.data.updated,
+	words: remarkPluginFrontmatter.words,
+	minutes: remarkPluginFrontmatter.minutes,
+};
+
+// 处理封面图
+const processedImage = processCoverImageSync(entry.data.image, entry.id);
+const apiUrls = getApiUrlList(entry.data.image, entry.id);
+
+let posterCoverUrl = processedImage;
+if (processedImage) {
+	const isLocal = !(
+		processedImage.startsWith("/") ||
+		processedImage.startsWith("http") ||
+		processedImage.startsWith("https") ||
+		processedImage.startsWith("data:")
+	);
+	if (isLocal) {
+		const basePath = getFileDirFromPath(entry.filePath || "");
+		const files = import.meta.glob<ImageMetadata>("../../**", {
+			import: "default",
+		});
+		let normalizedPath = path
+			.normalize(path.join("../../", basePath, processedImage))
+			.replace(/\\/g, "/");
+		const file = files[normalizedPath];
+		if (file) {
+			const img = await file();
+			posterCoverUrl = img.src;
+		}
+	}
+}
+
+dayjs.extend(utc);
+
+const jsonLd = {
+	"@context": "https://schema.org",
+	"@type": "BlogPosting",
+	headline: entry.data.title,
+	description: entry.data.description || entry.data.title,
+	keywords: entry.data.tags,
+	author: {
+		"@type": "Person",
+		name: profileConfig.name,
+		url: Astro.site,
+	},
+	datePublished: formatDateToYYYYMMDD(entry.data.published),
+	inLanguage: entry.data.lang
+		? entry.data.lang.replace("_", "-")
+		: siteConfig.lang.replace("_", "-"),
+};
+---
+
+<MainGridLayout
+  banner={processedImage}
+  title={entry.data.title}
+  description={entry.data.description}
+  lang={entry.data.lang}
+  setOGTypeArticle={true}
+  postSlug={entry.id}
+  postCategory={entry.data.category || undefined}
+  headings={headings}
+  bannerPostMeta={bannerPostMeta}
+>
+  <!-- KaTeX 按需加载 -->
+  <KatexManager slot="head" />
+
+  <script
+    is:inline
+    slot="head"
+    type="application/ld+json"
+    set:html={JSON.stringify(jsonLd)}
+  />
+
+  <!-- 文章内容 -->
+  <div id="private-article-content">
+    <div class="flex w-full rounded-(--radius-large) overflow-hidden relative mb-4">
+      <div class="card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full">
+        <!-- 阅读时间 -->
+        <div class="flex flex-row text-black/30 dark:text-white/30 gap-5 mb-3 transition onload-animation">
+          <div class="flex flex-row items-center">
+            <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
+              <Icon is:inline name="material-symbols:notes-rounded" />
+            </div>
+            <div class="text-sm">
+              {remarkPluginFrontmatter.words}
+              {" " + i18n(I18nKey.wordsCount)}
+            </div>
+          </div>
+          <div class="flex flex-row items-center">
+            <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
+              <Icon is:inline name="material-symbols:schedule-outline-rounded" />
+            </div>
+            <div class="text-sm">
+              {remarkPluginFrontmatter.minutes}
+              {
+                " " +
+                  i18n(
+                    remarkPluginFrontmatter.minutes === 1
+                      ? I18nKey.minuteCount
+                      : I18nKey.minutesCount
+                  )
+              }
+            </div>
+          </div>
+          <div class="flex flex-row items-center">
+            <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
+              <Icon is:inline name="material-symbols:lock-outline" />
+            </div>
+            <div class="text-sm">私密文章</div>
+          </div>
+        </div>
+
+        <!-- 标题 -->
+        <div class="relative onload-animation">
+          <div class="transition w-full block font-bold mb-3 text-3xl md:text-[2.25rem]/[2.75rem] text-black/90 dark:text-white/90 md:before:w-1 before:h-5 before:rounded-md before:bg-(--primary) before:absolute before:top-3 before:-left-4.5">
+            {entry.data.title}
+          </div>
+        </div>
+
+        <!-- 元数据 -->
+        <div class="onload-animation">
+          <PostMetadata
+            className="mb-5"
+            published={entry.data.published}
+            updated={entry.data.updated}
+            tags={entry.data.tags}
+            category={entry.data.category || undefined}
+            id={entry.id}
+          />
+          {
+            !processedImage && (
+              <div class="border-(--line-divider) border-dashed border-b mt-3 mb-5" />
+            )
+          }
+        </div>
+
+        <!-- 封面图 -->
+        {
+          processedImage && coverImageConfig.enableInPost && (
+            <div style="margin-top:1rem;">
+              <CoverImage
+                id="post-cover"
+                src={processedImage}
+                basePath={getFileDirFromPath(entry.filePath || '')}
+                class="mb-8 rounded-xl banner-container onload-animation"
+                preview={false}
+                apiUrls={apiUrls}
+              />
+            </div>
+          )
+        }
+
+        <!-- 文章内容 -->
+        <Markdown class="mb-6 markdown-content onload-animation">
+          <Content />
+        </Markdown>
+
+        <!-- 返回私密文章列表 -->
+        <div class="mt-8 text-center">
+          <a
+            href={url("/private/")}
+            class="inline-flex items-center gap-2 px-6 py-3 bg-(--primary) text-white dark:text-black/70 rounded-lg font-medium hover:bg-(--primary)/80 hover:scale-105 active:scale-95 transition-all"
+          >
+            <Icon is:inline name="material-symbols:arrow-back" class="text-sm" />
+            <span>返回私密文章列表</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</MainGridLayout>
+
+<script>
+  // 私密文章详情页不需要密码验证，直接显示内容
+  // 密码验证只在 /private/ 列表页进行
+</script>

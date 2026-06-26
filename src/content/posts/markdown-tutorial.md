@@ -11,6 +11,7 @@ sourceLink: "https://github.com/emn178/markdown"
 draft: false
 password: "582642"
 passwordHint: "常用密码"
+private: true
 ---
 
 这是一个展示如何编写 Markdown 文件的示例。本文档汇总了核心语法与常见扩展（GFM）。

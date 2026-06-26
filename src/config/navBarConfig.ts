@@ -89,6 +89,12 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 				external: true,
 				icon: "material-symbols:docs",
 			},
+			{
+				name: "私密文章",
+				url: "/private/",
+				external: false,
+				icon: "material-symbols:lock",
+			},
 		],
 	});
 

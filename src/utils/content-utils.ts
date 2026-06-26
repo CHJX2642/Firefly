@@ -6,7 +6,12 @@ import { getCategoryUrl } from "@utils/url-utils";
 // // Retrieve posts and sort them by publication date
 async function getRawSortedPosts() {
 	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		// 过滤掉草稿和私密文章（私密文章只能在 /private/ 页面访问）
+		if (import.meta.env.PROD) {
+			return data.draft !== true && data.private !== true;
+		}
+		// 开发环境下也过滤掉私密文章
+		return data.private !== true;
 	});
 
 	const sorted = allBlogPosts.sort((a, b) => {
@@ -58,7 +63,10 @@ export type Tag = {
 
 export async function getTagList(): Promise<Tag[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		if (import.meta.env.PROD) {
+			return data.draft !== true && data.private !== true;
+		}
+		return data.private !== true;
 	});
 
 	const countMap: { [key: string]: number } = {};
@@ -85,7 +93,10 @@ export type Category = {
 
 export async function getCategoryList(): Promise<Category[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		if (import.meta.env.PROD) {
+			return data.draft !== true && data.private !== true;
+		}
+		return data.private !== true;
 	});
 	const count: { [key: string]: number } = {};
 	allBlogPosts.forEach((post: { data: { category: string | null } }) => {
@@ -161,7 +172,10 @@ export async function getRelatedPosts(
 	maxCount = 5,
 ): Promise<PostForList[]> {
 	const allPosts = await getCollection<"posts">("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		if (import.meta.env.PROD) {
+			return data.draft !== true && data.private !== true;
+		}
+		return data.private !== true;
 	});
 
 	// 排除自身和加密文章

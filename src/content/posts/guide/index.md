@@ -1,7 +1,7 @@
 ---
 title: Firefly 简单使用指南
 published: 1970-01-02
-pinned: true
+pinned: false
 description: "如何使用 Firefly 博客模板。"
 image: "./cover.avif"
 tags: ["Firefly", "博客", "Markdown", "使用指南"]
@@ -9,6 +9,7 @@ category: 博客指南
 draft: false
 password: "582642"
 passwordHint: "常用密码"
+private: true
 ---
 
 
