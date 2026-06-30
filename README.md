@@ -86,7 +86,7 @@
 
 如果你有好用的功能和优化，请提交 [Pull Request](https://github.com/CuteLeaf/Firefly/pulls)
 
-## 🚀 快速开始
+## 🚀 快速开始：
 
 ### 环境要求
 
