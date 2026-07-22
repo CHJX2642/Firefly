@@ -14,8 +14,8 @@ GitLab CE（Community Edition）是一个功能强大的开源代码托管平台
 
 本文将详细介绍如何在 Windows 环境下，使用 Docker Desktop 部署 GitLab CE，包括：
 
-1. WSL2 资源配置（防止内存不足）
-2. Docker 环境准备
+1. 安装 Docker Desktop
+2. 配置 WSL2 资源（防止内存不足）
 3. GitLab 容器部署
 4. 中文界面设置
 5. 项目创建和代码推送
@@ -27,7 +27,21 @@ GitLab CE（Community Edition）是一个功能强大的开源代码托管平台
 - **内存**：至少 8GB（推荐 16GB）
 - **磁盘空间**：至少 20GB 可用空间
 
-## 一、配置 WSL2 资源（关键前置步骤）
+## 一、安装 Docker Desktop
+
+1. 官网下载 Docker Desktop 安装包
+
+2. 运行安装程序，**一路默认选项**即可，安装完成后会自动配置 WSL2 后端
+
+3. 启动 Docker，等待引擎加载完成
+
+4. PowerShell 验证环境：
+   ```powershell
+   docker -v
+   docker compose version
+   ```
+
+## 二、配置 WSL2 资源（关键步骤）
 
 GitLab 最低建议内存 **4GB**，默认 WSL 无资源限制，极易出现 502 网关错误、启动卡死。
 
@@ -78,34 +92,30 @@ localhostForwarding=true
 
 > 💡 **验证方式**：进入 WSL 终端输入 `free -h` 查看内存上限。
 
-## 二、安装 Docker Desktop
-
-1. 官网下载 Docker Desktop 安装包
-
-2. 运行安装程序，**一路默认选项**即可，安装完成后会自动配置 WSL2 后端
-
-3. 启动 Docker，等待引擎加载完成
-
-4. PowerShell 验证环境：
-   ```powershell
-   docker -v
-   docker compose version
-   ```
-
 ## 三、拉取 GitLab CE 镜像
+
+> 💡 **说明**：拉取镜像是全局操作，**在任意目录下都可以执行**，不需要特定位置。
+
+**官方镜像（海外源，速度较慢）：**
 
 ```powershell
 docker pull gitlab/gitlab-ce:latest
 ```
 
-> 💡 **提示**：GitLab CE 镜像较大（约 2GB），请耐心等待下载完成。
+**华为云镜像（国内推荐，速度快）：**
+
+```powershell
+docker pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/gitlab/gitlab-ce:latest
+```
+
+> 💡 **提示**：GitLab CE 镜像较大（约 2GB），国内用户建议使用华为云镜像源加速下载。
 
 ## 四、创建工作目录 + docker-compose.yml
 
 ### 4.1 创建目录
 
 ```powershell
-mkdir D:\Docker\gitlab-work
+mkdir D:\Docker\gitlab-work        # 📁 自定义：工作目录路径
 cd D:\Docker\gitlab-work
 ```
 
@@ -115,31 +125,41 @@ cd D:\Docker\gitlab-work
 version: '3.8'
 services:
   gitlab:
-    image: gitlab/gitlab-ce:latest
-    container_name: gitlab-ce
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/gitlab/gitlab-ce:latest
+    container_name: gitlab-ce          # 🔄 自定义：容器名称（需唯一）
     restart: always
     ports:
-      - "8080:80"
-      - "8443:443"
-      - "2222:22"
+      - "8080:80"                      # 🔄 自定义：HTTP 端口（宿主机:容器）
+      - "8443:443"                     # 🔄 自定义：HTTPS 端口
+      - "2222:22"                      # 🔄 自定义：SSH 端口
     volumes:
-      - D:/Docker/gitlab/config:/etc/gitlab
-      - D:/Docker/gitlab/logs:/var/log/gitlab
-      - D:/Docker/gitlab/data:/var/opt/gitlab
+      - D:/Docker/gitlab/config:/etc/gitlab       # 📁 自定义：配置文件存储路径
+      - D:/Docker/gitlab/logs:/var/log/gitlab      # 📁 自定义：日志存储路径
+      - D:/Docker/gitlab/data:/var/opt/gitlab      # 📁 自定义：数据存储路径
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://localhost:8080'
-        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        external_url 'http://localhost:8080'       # 🔄 自定义：访问地址（需与 HTTP 端口一致）
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222  # 🔄 自定义：SSH 端口（需与上面一致）
     shm_size: '256m'
 ```
 
 > ⚠️ **注意**：Windows 路径必须使用 `/`，禁止 `\`
 
-**端口说明：**
+**可自定义配置说明：**
 
-- `8080:80`：HTTP 访问端口
-- `8443:443`：HTTPS 访问端口
-- `2222:22`：SSH 端口（用于 Git 操作）
+| 配置项 | 当前值 | 说明 |
+|--------|--------|------|
+| `container_name` | gitlab-ce | 容器名称，运行多个实例时需唯一 |
+| `ports` - HTTP | 8080:80 | 浏览器访问端口，修改冒号前的数字 |
+| `ports` - HTTPS | 8443:443 | HTTPS 访问端口 |
+| `ports` - SSH | 2222:22 | Git 推送端口 |
+| `volumes` - config | D:/Docker/gitlab/config | 配置文件本地存储路径 |
+| `volumes` - logs | D:/Docker/gitlab/logs | 日志本地存储路径 |
+| `volumes` - data | D:/Docker/gitlab/data | 数据本地存储路径 |
+| `external_url` | localhost:8080 | 访问地址，需与 HTTP 端口一致 |
+| `gitlab_shell_ssh_port` | 2222 | SSH 端口，需与 ports 中 SSH 配置一致 |
+
+> 💡 **运行多个实例时**：所有带 🔄 标记的配置项都不能与其它实例冲突
 
 ## 五、启动 GitLab 容器
 
