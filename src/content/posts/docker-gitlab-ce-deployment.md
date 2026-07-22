@@ -110,6 +110,16 @@ docker pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/gitlab/gitlab-ce:
 
 > 💡 **提示**：GitLab CE 镜像较大（约 2GB），国内用户建议使用华为云镜像源加速下载。
 
+**已下载过官方镜像？本地复用方法：**
+
+如果之前已经下载过官方镜像，不想重复下载，可以手动给本地旧镜像打新标签，实现本地复用：
+
+```powershell
+docker tag gitlab/gitlab-ce:latest swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/gitlab/gitlab-ce:latest
+```
+
+> 💡 **说明**：执行后本地会多一个华为云标签的镜像，实际指向同一份数据，不占用额外空间。
+
 ## 四、创建工作目录 + docker-compose.yml
 
 ### 4.1 创建目录
@@ -319,6 +329,45 @@ docker pull gitlab/gitlab-ce:latest
 docker compose down
 docker compose up -d
 ```
+
+### 5. 端口访问报错（空响应、无法访问）
+
+**问题根因**：`gitlab.rb` 配置文件中 `external_url` 配置错误，带端口导致容器内监听端口与宿主机端口转发冲突。
+
+**解决方案**：
+
+**第一步：进入容器编辑配置文件**
+```bash
+docker exec -it gitlab-ce bash
+vi /etc/gitlab/gitlab.rb
+```
+
+**第二步：修改 external_url（仅改这一处）**
+
+在文件最顶部添加：
+```bash
+external_url 'http://localhost'
+```
+
+> ⚠️ **致命避坑**
+> - ❌ 禁止写：`external_url 'http://localhost:8080'`（会导致容器内监听端口冲突）
+> - ✅ 正确写法：**不带任何端口**
+
+**第三步：前置检查**
+
+全局搜索文件，删除或注释所有重复的 `external_url` 配置，保证全文仅 1 条有效配置。
+
+**第四步：重载配置并重启**
+```bash
+gitlab-ctl reconfigure
+```
+> ⚠️ 必须等待终端输出 `gitlab Reconfigured!`，禁止中途中断
+
+```bash
+gitlab-ctl restart
+```
+
+等待服务重启完成，即可正常访问。
 
 ## 📝 重要避坑汇总
 
