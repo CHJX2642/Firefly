@@ -53,15 +53,17 @@ GitLab 最低建议内存 **4GB**，默认 WSL 无资源限制，极易出现 50
 ```ini
 [wsl2]
 memory=4GB
-processors=2
+processors=4
 swap=2GB
+localhostForwarding=true
 ```
 
 **参数说明：**
 
 - `memory=4GB`：分配给 WSL 最大内存 4GB（GitLab 最低标准，电脑配置高可改为 6GB）
-- `processors=2`：分配 CPU 核心数量，根据电脑调整
+- `processors=4`：分配 CPU 核心数量，根据电脑调整
 - `swap=2GB`：交换分区，缓解内存不足
+- `localhostForwarding=true`：启用 localhost 转发，便于访问 WSL 内服务
 
 ### 步骤 3：生效配置
 
