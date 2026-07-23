@@ -381,6 +381,53 @@ gitlab-ctl restart
 
 5. 重启容器不会丢失数据，数据持久化在 `D:/Docker/gitlab` 目录
 
+## ⚙️ Docker 容器自启动管理
+
+### 开启自启动
+
+**创建容器时指定自启动：**
+```bash
+docker run --restart=always <镜像名>
+```
+
+**容器已启动，通过 update 命令修改：**
+```bash
+docker update --restart=always <容器ID>
+```
+
+### 关闭自启动
+
+**关闭单个容器自启动：**
+```bash
+docker update --restart=no <容器ID>
+```
+
+**取消所有容器自启动：**
+```bash
+docker update --restart=no $(docker ps -q)
+```
+
+### docker-compose 配置容器自启动
+
+在 `docker-compose.yml` 中添加 `restart: always`：
+```yaml
+services:
+  gitlab:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/gitlab/gitlab-ce:latest
+    container_name: gitlab-ce
+    restart: always  # 🔄 自动重启策略
+    ports:
+      - "8080:80"
+```
+
+**restart 策略说明：**
+| 策略 | 说明 |
+|------|------|
+| `no` | 不自动重启（默认） |
+| `always` | 总是重启 |
+| `on-failure` | 仅在非零退出码时重启 |
+| `unless-stopped` | 除非手动停止，否则总是重启 |
+
 ## 🎯 总结
 
 通过 Docker 部署 GitLab CE 是一种简单高效的方式，具有以下优势：
